@@ -2,15 +2,16 @@
 #include <unistd.h>
 #include <stdio.h>
 #include <pthread.h>
-#define skrzaty 4 //ilosc skrzatow
+#define skrzaty 5 //ilosc skrzatow
 #define ilosc_pieter 4 //ilosc pieter
 #define max_ozodoby 2 //ile max ozdob na pietro
 #define max_skrzatow_na_poziom 5 //ile max skrzatow na pietro
 #define ozdoby_dodaj 2 //ile mikolaj dodaje ozdob
+#define max_na_magazynie 3 //max na magzaynie
 int ile_na_choince; //aktualna liczba ozdob na choince
 
-int ozdoby[ilosc_pieter] = {0}; //ilosc ozdob na kazdym pietrze
-int pietra[ilosc_pieter] = {0}; //ilosc skrzatow na kazdym pietrze
+int ozdoby[ilosc_pieter + 1] = {0}; //ilosc ozdob na kazdym pietrze
+int pietra[ilosc_pieter + 1] = {0}; //ilosc skrzatow na kazdym pietrze
 
 int aktualna_liczba_magazyn = 0; //ozdoby na dole
 
@@ -37,6 +38,7 @@ void rysuj()
     {
       printf("*");
     }
+    printf(" - %d", ozdoby[i]);
     printf("\n");
   }
   printf("%s", CLEAR);
@@ -99,11 +101,13 @@ void* zanies_ozdobe(void* arg)
           pietra[aktualny_poziom]++;
           pthread_mutex_unlock(&mtx_pietra);
 
+
           if (ozdoby[aktualny_poziom] < max_ozodoby)
           {
             printf("%s[LOG][%ld] - zostawiam ozdobe na %d, mam %d ozdob\n%s", MAGENTA, pthread_self(), aktualny_poziom, niesiona_ozdoba, CLEAR);
             pthread_mutex_lock(&mtx_ozdoby_put);
             ozdoby[aktualny_poziom]++;
+            rysuj();
             pthread_mutex_unlock(&mtx_ozdoby_put);
             niesiona_ozdoba--;
 
@@ -121,14 +125,19 @@ void* zanies_ozdobe(void* arg)
 
 void* przynies_ozdobe(void* arg)
 {
+  rysuj();
+
   while(ile_na_choince != max_ozodoby*ilosc_pieter)
   {
     pthread_mutex_lock(&mtx_ozdoby_get);
-    aktualna_liczba_magazyn+=ozdoby_dodaj;
+    if (aktualna_liczba_magazyn + ozdoby_dodaj <= max_na_magazynie)
+      aktualna_liczba_magazyn+=ozdoby_dodaj;
+    else
+      aktualna_liczba_magazyn = max_na_magazynie;
     printf("%s[LOG][%ld] (mikolaj) - dodaje ozdoby, stan: %d\n%s", GREEN, pthread_self(), aktualna_liczba_magazyn, CLEAR);
     pthread_cond_signal(&can_get);
     pthread_mutex_unlock(&mtx_ozdoby_get);
-    sleep(3);
+    sleep(2);
   }
   printf("%s[LOG][%ld] (mikolaj) - koniec ozdob\033[0\n%s", RED, pthread_self(), CLEAR);
 }
