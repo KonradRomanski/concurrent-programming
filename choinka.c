@@ -5,7 +5,7 @@
 #define skrzaty 8 //ilosc skrzatow
 #define ilosc_pieter 4 //ilosc pieter
 #define max_ozodoby 3 //ile max ozdob na pietro
-#define max_skrzatow_na_poziom 5 //ile max skrzatow na pietro
+#define max_skrzatow_na_poziom 2 //ile max skrzatow na pietro
 #define ozdoby_dodaj 2 //ile mikolaj dodaje ozdob
 #define max_na_magazynie 3 //max na magzaynie
 int ile_na_choince; //aktualna liczba ozdob na choince
@@ -52,10 +52,12 @@ void* zanies_ozdobe(void* arg)
 
   while(ile_na_choince != max_ozodoby*ilosc_pieter)
   {
+    // printf("%s[LOG][%ld] - ide sobie\n%s", YELLOW, pthread_self(), CLEAR);
+
     sleep(1);
     //##choinka ubrana
       //mozliwa blokada, schodze i czekam na dole
-      if (pietra[aktualny_poziom] == max_skrzatow_na_poziom && pietra[aktualny_poziom + 1] == max_skrzatow_na_poziom && pietra[aktualny_poziom - 1] < max_skrzatow_na_poziom) //zaczynam ewakuacje
+      if (pietra[aktualny_poziom] == max_skrzatow_na_poziom && pietra[aktualny_poziom + 1] == max_skrzatow_na_poziom && (pietra[aktualny_poziom - 1] < max_skrzatow_na_poziom || aktualny_poziom - 1 == 0)) //zaczynam ewakuacje
       {
         ewakuacja = 1;
       }
@@ -71,7 +73,7 @@ void* zanies_ozdobe(void* arg)
       else if (ewakuacja == 1 && aktualny_poziom == 0) // ewakuacja zakonczona, czekam
       {
         ewakuacja = 0;
-        sleep(3);
+        sleep(10);
       }
 
       else if (niesiona_ozdoba == 0)
@@ -80,25 +82,21 @@ void* zanies_ozdobe(void* arg)
         if (aktualny_poziom == 0)
         {
           pthread_mutex_lock(&mtx_ozdoby_get);
+
           while(aktualna_liczba_magazyn <= 0)
             pthread_cond_wait(&can_get, &mtx_ozdoby_get);
+
           if (aktualna_liczba_magazyn > 0) //sprawdz, czy czasem nie koniec ubierania
             aktualna_liczba_magazyn--;
-          pthread_mutex_unlock(&mtx_ozdoby_get);
+
           niesiona_ozdoba++;
           printf("%s[LOG][%ld] - biore ozdobe, mam %d, pozostalo %d\n%s", MAGENTA, pthread_self(), niesiona_ozdoba, aktualna_liczba_magazyn, CLEAR);
-        }
-        //##brak ozdob, 1. pietro
-        else if (aktualny_poziom == 1)
-        {
-          printf("%s[LOG][%ld] - schodze na parter\n%s", CYAN, pthread_self(), CLEAR);
-          aktualny_poziom--;
-          pthread_mutex_lock(&mtx_pietra);
-          pietra[aktualny_poziom + 1]--;
-          pthread_mutex_unlock(&mtx_pietra);
+
+          pthread_mutex_unlock(&mtx_ozdoby_get);
+
         }
         //##brak ozdob, schodze
-        else if (pietra[aktualny_poziom - 1] < max_skrzatow_na_poziom)
+        else if (pietra[aktualny_poziom - 1] < max_skrzatow_na_poziom || aktualny_poziom == 1)
         {
           printf("%s[LOG][%ld] - schodze na %d\n%s", CYAN, pthread_self(),  aktualny_poziom - 1, CLEAR);
           aktualny_poziom--;
@@ -125,7 +123,6 @@ void* zanies_ozdobe(void* arg)
 
           if (ozdoby[aktualny_poziom] < max_ozodoby)
           {
-            printf("%s[LOG][%ld] - zostawiam ozdobe na %d, mam %d ozdob\n%s", MAGENTA, pthread_self(), aktualny_poziom, niesiona_ozdoba, CLEAR);
             pthread_mutex_lock(&mtx_ozdoby_put);
             ozdoby[aktualny_poziom]++;
             // rysuj();
@@ -136,6 +133,7 @@ void* zanies_ozdobe(void* arg)
             ile_na_choince++;
             pthread_mutex_unlock(&mtx_ile_choinka);
 
+            printf("%s[LOG][%ld] - zostawiam ozdobe na %d, mam %d ozdob\n%s", MAGENTA, pthread_self(), aktualny_poziom, niesiona_ozdoba, CLEAR);
           }
         }
       }
@@ -156,11 +154,11 @@ void* przynies_ozdobe(void* arg)
     else
       aktualna_liczba_magazyn = max_na_magazynie;
     printf("%s[LOG][%ld] (mikolaj) - dodaje ozdoby, stan: %d\n%s", GREEN, pthread_self(), aktualna_liczba_magazyn, CLEAR);
-    pthread_cond_signal(&can_get);
+    pthread_cond_broadcast(&can_get);
     pthread_mutex_unlock(&mtx_ozdoby_get);
     sleep(2);
   }
-  pthread_cond_signal(&can_get);
+  pthread_cond_broadcast(&can_get);
   printf("%s[LOG][%ld] (mikolaj) - koniec ozdob\033[0\n%s", RED, pthread_self(), CLEAR);
 }
 
