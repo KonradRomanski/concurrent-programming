@@ -17,7 +17,7 @@ Gdy choinka zostanie ubrana wszystkie skrzaty wraz ze Świętym Mikołajem się 
 ## Palacze tytoniu - IPC
 
 ### Zadanie
-Zadanie oparte jest na problemie palaczy tytoniu (opis w Wikipedii (po angielsku)) przy czym:
+Zadanie oparte jest na problemie palaczy tytoniu (opis w [Wikipedii](https://en.wikipedia.org/wiki/Cigarette_smokers_problem) (po angielsku)) przy czym:
 
 1. palacze rozliczają się między sobą za udostępniane składniki po aktualnym kursie giełdowym;
 2. rola agenta sprowadza się do ustalania kursu giełdowego składników;
