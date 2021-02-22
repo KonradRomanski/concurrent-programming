@@ -89,12 +89,18 @@ void* zanies_ozdobe(void* arg)
 
           if (aktualna_liczba_magazyn > 0) //sprawdz, czy czasem nie koniec ubierania
             aktualna_liczba_magazyn--;
-
+          pthread_mutex_unlock(&mtx_ozdoby_get);
           niesiona_ozdoba++;
           printf("%s[LOG][%ld] - biore ozdobe, mam %d, pozostalo %d\n%s", MAGENTA, pthread_self(), niesiona_ozdoba, aktualna_liczba_magazyn, CLEAR);
-
-          pthread_mutex_unlock(&mtx_ozdoby_get);
-
+        }
+        //##brak ozdob, 1. pietro
+        else if (aktualny_poziom == 1)
+        {
+          printf("%s[LOG][%ld] - schodze na parter\n%s", CYAN, pthread_self(), CLEAR);
+          aktualny_poziom--;
+          pthread_mutex_lock(&mtx_pietra);
+          pietra[aktualny_poziom + 1]--;
+          pthread_mutex_unlock(&mtx_pietra);
         }
         //##brak ozdob, schodze
         else if (pietra[aktualny_poziom - 1] <  limit_skrzatow[aktualny_poziom - 1] + 1 || aktualny_poziom == 1)
@@ -156,11 +162,11 @@ void* przynies_ozdobe(void* arg)
     else
       aktualna_liczba_magazyn = max_na_magazynie;
     printf("%s[LOG][%ld] (mikolaj) - dodaje ozdoby, stan: %d\n%s", GREEN, pthread_self(), aktualna_liczba_magazyn, CLEAR);
-    pthread_cond_broadcast(&can_get);
+    pthread_cond_signal(&can_get);
     pthread_mutex_unlock(&mtx_ozdoby_get);
     sleep(2);
   }
-  pthread_cond_broadcast(&can_get);
+  pthread_cond_signal(&can_get);
   printf("%s[LOG][%ld] (mikolaj) - koniec ozdob\033[0\n%s", RED, pthread_self(), CLEAR);
 }
 
