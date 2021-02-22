@@ -2,9 +2,9 @@
 #include <unistd.h>
 #include <stdio.h>
 #include <pthread.h>
-#define skrzaty 5 //ilosc skrzatow
+#define skrzaty 8 //ilosc skrzatow
 #define ilosc_pieter 4 //ilosc pieter
-#define max_ozodoby 2 //ile max ozdob na pietro
+#define max_ozodoby 3 //ile max ozdob na pietro
 #define max_skrzatow_na_poziom 5 //ile max skrzatow na pietro
 #define ozdoby_dodaj 2 //ile mikolaj dodaje ozdob
 #define max_na_magazynie 3 //max na magzaynie
@@ -48,12 +48,33 @@ void* zanies_ozdobe(void* arg)
 {
   static __thread int niesiona_ozdoba = 0;
   static __thread int aktualny_poziom = 0;
+  static __thread int ewakuacja = 0;
 
   while(ile_na_choince != max_ozodoby*ilosc_pieter)
   {
     sleep(1);
     //##choinka ubrana
-      if (niesiona_ozdoba == 0)
+      //mozliwa blokada, schodze i czekam na dole
+      if (pietra[aktualny_poziom] == max_skrzatow_na_poziom && pietra[aktualny_poziom + 1] == max_skrzatow_na_poziom && pietra[aktualny_poziom - 1] < max_skrzatow_na_poziom) //zaczynam ewakuacje
+      {
+        ewakuacja = 1;
+      }
+      else if (ewakuacja == 1 && aktualny_poziom > 0) //dalej sie ewakuuje
+      {
+        printf("%s[LOG][%ld] - ewakuacja, schodze na %d\n%s", CYAN, pthread_self(),  aktualny_poziom - 1, CLEAR);
+        aktualny_poziom--;
+        pthread_mutex_lock(&mtx_pietra);
+        pietra[aktualny_poziom + 1]--;
+        pietra[aktualny_poziom]++;
+        pthread_mutex_unlock(&mtx_pietra);
+      }
+      else if (ewakuacja == 1 && aktualny_poziom == 0) // ewakuacja zakonczona, czekam
+      {
+        ewakuacja = 0;
+        sleep(3);
+      }
+
+      else if (niesiona_ozdoba == 0)
       {
         //##brak ozdob, parter
         if (aktualny_poziom == 0)
@@ -61,8 +82,8 @@ void* zanies_ozdobe(void* arg)
           pthread_mutex_lock(&mtx_ozdoby_get);
           while(aktualna_liczba_magazyn <= 0)
             pthread_cond_wait(&can_get, &mtx_ozdoby_get);
-
-          aktualna_liczba_magazyn--;
+          if (aktualna_liczba_magazyn > 0) //sprawdz, czy czasem nie koniec ubierania
+            aktualna_liczba_magazyn--;
           pthread_mutex_unlock(&mtx_ozdoby_get);
           niesiona_ozdoba++;
           printf("%s[LOG][%ld] - biore ozdobe, mam %d, pozostalo %d\n%s", MAGENTA, pthread_self(), niesiona_ozdoba, aktualna_liczba_magazyn, CLEAR);
@@ -107,7 +128,7 @@ void* zanies_ozdobe(void* arg)
             printf("%s[LOG][%ld] - zostawiam ozdobe na %d, mam %d ozdob\n%s", MAGENTA, pthread_self(), aktualny_poziom, niesiona_ozdoba, CLEAR);
             pthread_mutex_lock(&mtx_ozdoby_put);
             ozdoby[aktualny_poziom]++;
-            rysuj();
+            // rysuj();
             pthread_mutex_unlock(&mtx_ozdoby_put);
             niesiona_ozdoba--;
 
@@ -125,7 +146,7 @@ void* zanies_ozdobe(void* arg)
 
 void* przynies_ozdobe(void* arg)
 {
-  rysuj();
+  // rysuj();
 
   while(ile_na_choince != max_ozodoby*ilosc_pieter)
   {
@@ -139,6 +160,7 @@ void* przynies_ozdobe(void* arg)
     pthread_mutex_unlock(&mtx_ozdoby_get);
     sleep(2);
   }
+  pthread_cond_signal(&can_get);
   printf("%s[LOG][%ld] (mikolaj) - koniec ozdob\033[0\n%s", RED, pthread_self(), CLEAR);
 }
 
@@ -165,7 +187,7 @@ int main(int arg, char *argv[])
   pthread_join(proc_mikolaj, NULL);
 
 
-  rysuj();
+  // rysuj();
 
   printf("%s[LOG][%ld] - program ended%s\n", YELLOW, pthread_self(), CLEAR);
 
