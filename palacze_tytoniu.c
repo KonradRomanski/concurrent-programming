@@ -19,26 +19,46 @@ char* CLEAR = "\033[0m";
 
 int agent()
 {
-  //losowanie kursu
-  for (int i = 0; i < 3; i++) kurs[i] = rand() % 100 + 10;
+  while(1)
+  {
+    //losowanie kursu
+    for (int i = 0; i < 3; i++) kurs[i] = rand() % 100 + 10;
+
+  }
 
 }
 
 int palacz(int nr)
 {
-  //sprawdzanei czy stac na produkty
-  if (kurs[(nr+1)%3] + kurs[(nr+2)%3] <= saldo[nr])
+  while(1)
   {
-    //placenie
-    saldo -= kurs[(nr+1)%3] + kurs[(nr+2)%3];
-    saldo[(nr+1)%3] += kurs[(nr+1)%3];
-    saldo[(nr+2)%3] += kurs[(nr+2)%3];
-    //palenie
-    sleep(4);
+    //sprawdzanei czy stac na produkty
+    if (kurs[(nr+1)%3] + kurs[(nr+2)%3] <= saldo[nr])
+    {
+      //placenie
+      saldo -= kurs[(nr+1)%3] + kurs[(nr+2)%3];
+      saldo[(nr+1)%3] += kurs[(nr+1)%3];
+      saldo[(nr+2)%3] += kurs[(nr+2)%3];
+      //palenie
+      sleep(4);
+    }
+
   }
 }
 
 int main(int arg, char *argv[])
 {
   srand(time(NULL));
+
+  for (int i = 0; i < 3; i++)
+  {
+    if (fork() == 0)
+    {
+      palacz(i);
+    }
+  }
+  if (fork() == 0)
+    agent();
+  else
+    wait(0);
 }
