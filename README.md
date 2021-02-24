@@ -27,9 +27,10 @@ Zadanie oparte jest na problemie palaczy tytoniu (opis w [Wikipedii](https://en.
 
 ### Opis wykonania zadania
 
-Agent co pare sekund ustala nowy kurs tytoniu, papieru i zapałek. Palacze, jeżeli aktualny kurs na to pozwala kupują od siebie nawzajem potrzebne składniki i idą palić papierosy. Po sprzedaniu towaru saldo pracownika zwiększa się, co czyni go potencjalnie nowym nabywcom kolejnych papierosów.  
+Agent co parę sekund ustala nowy kurs tytoniu, papieru i zapałek. Palacze, jeżeli aktualny kurs na to pozwala kupują od siebie nawzajem potrzebne składniki i idą palić papierosy. Po sprzedaniu towaru saldo pracownika zwiększa się, co czyni go potencjalnie nowym nabywcom kolejnych papierosów.  
 Agent przekazuje strukturę, zawierającą aktualny kurs, do 3 kolejek komunikatów (każdy palacz ma swoją prywatną kolejkę komunikatów przeznaczoną na aktualny kurs giełdowy składników), kurs jest przekazywany co pewien odstęp czasu.  
-Palacze odbierają, jeśli jest nowy, kurs składkników i kupuja towary, jesli na nie ich stac. Kupujac wysylaja kolejka (kazdy ma swoja kolejke do wyplat) zaplate za skladniki pozostalym palaczom.
-Program petli sie w nieskonczonosc - dopoki nie uzyjemy `killall palacze_tytoniu.out`, kolejki natomiast czyscimy `ipcrm -a`.
+Palacze odbierają, jeśli jest, to nowy, kurs składników i kupują towary, jeśli na nie ich stać. Kupując wysyłają kolejką (każdy ma swoja kolejkę do wypłat) zapłatę za składniki pozostałym palaczom.
+Program pętli się w nieskończoność - dopóki nie użyjemy `killall palacze_tytoniu.out`, kolejki natomiast czyścimy `ipcrm -a`.
+
 
 Created by Konrad Romański ©
