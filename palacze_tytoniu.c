@@ -54,6 +54,9 @@ int palacz(int nr)
   int portfel = 300;
   struct cena kurs;
   struct przelew p;
+  kurs.gielda[0] = 9999;
+  kurs.gielda[1] = 9999;
+  kurs.gielda[2] = 9999;
   kurs.mtype = 1;
   p.mtype = 0;
   while(1)
@@ -61,7 +64,7 @@ int palacz(int nr)
     msgrcv(wyplata[nr], &p, sizeof(p), 1, IPC_NOWAIT);
     portfel += p.ile;
 
-    msgrcv(gielda[nr], &kurs, sizeof(kurs), 1, 0);
+    msgrcv(gielda[nr], &kurs, sizeof(kurs), 1, IPC_NOWAIT);
 
 
     //sprawdzanei czy stac na produkty
@@ -78,6 +81,9 @@ int palacz(int nr)
       //palenie
       sleep(3);
     }
+    // else
+    // printf("%s[LOG][%d] - Mam %d nie stac mnie na zakup skladnikow za %d i %d. Probuje jescze raz\n%s", MAGENTA, getpid(), portfel, kurs.gielda[(nr+1)%3], kurs.gielda[(nr+2)%3], CLEAR);
+
   }
 }
 
